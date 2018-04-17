@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+# Usage example: ./configure --caf:with-log-level=trace --all:enable-asan
+
+import sys, re, os, shutil
+
+from subprocess import call
+from subprocess import check_call
+
+# get current workspace directory
+workspace = os.path.dirname(os.path.realpath(__file__))
+
+def config_project(project, options, build_project):
+  cli = options[project]
+  path = os.path.join(workspace, project)
+  os.chdir(path)
+  build_dir = os.path.join(path, "build")
+  if os.path.isdir(build_dir):
+    print("remove outdated build directory: " + build_dir)
+    shutil.rmtree(build_dir)
+  cmd = ["./configure"]
+  cmd.extend(cli)
+  print(project + " -> " + str(cmd))
+  check_call(cmd)
+  if build_project:
+    print(project + " -> run ninja")
+    call(["ninja", "-C", "build"])
+  os.chdir(workspace)
+
+if __name__ == "__main__":
+  options = {}
+  # first iterate all subdirectories (= projects) and add dictionary entries
+  # for each of them
+  for name in os.listdir(workspace):
+    options[name] = ["--generator=Ninja"]
+  # our default pattern extracts the project name (group 1) and
+  # project-specific options (group 2)
+  pattern = re.compile("--([a-z]+):(.+)")
+  # setting the build type affects all projects
+  build_type_pattern = re.compile("--build-type=(.+)")
+  # parse CLI arguments
+  for arg in sys.argv[1:]:
+    rxres = pattern.match(arg)
+    if rxres != None:
+      project = rxres.group(1)
+      opt = "--" + rxres.group(2)
+      # add options prefixed with '--all:...' to all projects
+      if project == "all":
+        for key in options:
+          options[key].append(opt)
+      else:
+        options[project].append(opt)
+    else:
+      rxres = build_type_pattern.match(arg)
+      if rxres != None:
+        for key in options:
+          options[key].append(arg)
+  # always build CAF first, since it's the dependency for all other projects
+  #config_project("caf", options, True)
+  caf_dir = os.path.join(workspace, "caf", "build")
+  for name in os.listdir(workspace):
+    full_name = os.path.join(workspace, name)
+    if name != "caf" and os.path.isdir(full_name):
+      options[name].append("--with-caf=" + caf_dir)
+      config_project(name, options, False)

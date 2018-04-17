@@ -1,0 +1,8 @@
+#/bin/bash
+
+printf "all:\n\tninja -C caf/build" > Makefile
+
+for arg in "$@"; do
+  printf " && ninja -C $arg/build" >> Makefile
+done
+printf "\n" >> Makefile
