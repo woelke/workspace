@@ -27,12 +27,16 @@ def config_project(project, options, build_project):
     call(["ninja", "-C", "build"])
   os.chdir(workspace)
 
+def is_hidden(file_name):
+  return name.startswith('.')
+
 if __name__ == "__main__":
   options = {}
   # first iterate all subdirectories (= projects) and add dictionary entries
   # for each of them
   for name in os.listdir(workspace):
-    options[name] = ["--generator=Ninja"]
+    if not is_hidden(name):
+      options[name] = ["--generator=Ninja"]
   # our default pattern extracts the project name (group 1) and
   # project-specific options (group 2)
   pattern = re.compile("--([a-z]+):(.+)")
@@ -56,10 +60,10 @@ if __name__ == "__main__":
         for key in options:
           options[key].append(arg)
   # always build CAF first, since it's the dependency for all other projects
-  #config_project("caf", options, True)
+  config_project("caf", options, True)
   caf_dir = os.path.join(workspace, "caf", "build")
   for name in os.listdir(workspace):
     full_name = os.path.join(workspace, name)
-    if name != "caf" and os.path.isdir(full_name):
+    if not is_hidden(name) and name != "caf" and os.path.isdir(full_name):
       options[name].append("--with-caf=" + caf_dir)
       config_project(name, options, False)
