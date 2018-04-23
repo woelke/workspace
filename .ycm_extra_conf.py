@@ -32,6 +32,9 @@ flags = [
 '-I' + MakeAbsPath('broker'),
 '-I' + MakeAbsPath('broker/tests'),
 '-I' + MakeAbsPath('benchmarks/include'),
+'-I' + MakeAbsPath('core'),
+'-I' + MakeAbsPath('core/tenzir'),
+'-I' + MakeAbsPath('core/tenzir/format'),
 ]
 
 SOURCE_EXTENSIONS = [ '.cpp', '.cxx', '.cc', '.c' ]
