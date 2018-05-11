@@ -55,6 +55,7 @@ function force_master {
   git fetch --all
   git reset --hard origin/master
   git checkout master
+  git pull
   git clean --force --quiet -d
 }
 
